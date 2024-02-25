@@ -9,7 +9,7 @@ An example entry:
 
 The Oxygen factor has to be above or equal to `0` (a value of `0` will disable the logic for said biome)
 
-The Gravity factor has to be between `-1` (will reverse gravity) or `0` (disables gravity logic for said biome)
+The Gravity factor has to be between `-1` (will disable gravity entirely) or `0` (disables gravity logic for said biome)
 
 ---
 

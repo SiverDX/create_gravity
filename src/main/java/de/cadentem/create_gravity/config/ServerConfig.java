@@ -61,7 +61,7 @@ public class ServerConfig {
         String fourthLine = "Oxygen factor needs to be positive (0 or higher) - If it is 0 the effect will be disabled in the biome\n";
         String lastLine = "The factors are optional (default values will apply (100;0.8)) - syntax in that case is \"<modid:biome>;;\" or \"<modid:biome>;<oxygen_factor>;\" or \"<modid:biome>;;<gravity_factor>\"";
 
-        BIOME_CONFIGS_INTERNAL = BUILDER.comment(firstLine + secondLine + thirdLine + fourthLine + lastLine).define("oxygen_factors", List.of("#minecraft:is_end;;"), ServerConfig::validateBiomeConfig);
+        BIOME_CONFIGS_INTERNAL = BUILDER.comment(firstLine + secondLine + thirdLine + fourthLine + lastLine).defineList("oxygen_factors", List.of("#minecraft:is_end;;"), ServerConfig::validateBiomeConfig);
 
         SPEC = BUILDER.build();
     }
@@ -145,7 +145,7 @@ public class ServerConfig {
 
     private static boolean isGravityFactorInvalid(final String gravityFactor) {
         try {
-            return Double.parseDouble(gravityFactor) >= 0;
+            return Double.parseDouble(gravityFactor) > 0;
         } catch (NumberFormatException ignored) {
             return true;
         }
