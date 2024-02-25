@@ -79,13 +79,13 @@ public class ServerConfig {
             return null;
         }
 
-        for (BiomeConfig factor : BIOME_CONFIGS) {
-            if (factor.isTag()) {
-                if (!biome.tags().filter(tag -> tag.location().equals(factor.biome())).toList().isEmpty()) {
-                    return factor;
+        for (BiomeConfig config : BIOME_CONFIGS) {
+            if (config.isTag()) {
+                if (!biome.tags().filter(tag -> tag.location().equals(config.biome())).toList().isEmpty()) {
+                    return config;
                 }
-            } else if (biome.is(factor.biome())) {
-                return factor;
+            } else if (biome.is(config.biome())) {
+                return config;
             }
         }
 

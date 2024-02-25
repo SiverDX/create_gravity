@@ -41,7 +41,7 @@ public class ForgeEvents {
             .asMap();
 
     private static final UUID LOW_GRAVITY_UUID = UUID.fromString("7871c3e3-1016-4d26-b65d-b154a5399e16");
-    private static final DecimalFormat FORMAT = new DecimalFormat("##.#");
+    private static final DecimalFormat FORMAT = new DecimalFormat("00.0");
     private static final DamageSource OUT_OF_OXYGEN = new DamageSource("out_of_oxygen").bypassArmor();
 
     private static final int LOW_AIR = /* Avoid vanilla out of air damage / reset (at -20) */ -10;
@@ -80,9 +80,6 @@ public class ForgeEvents {
         }
 
         GravityDataProvider.getCapability(player).ifPresent(data -> {
-            data.damageOxygen(1);
-            boolean hasDivingHelmet = player.getItemBySlot(EquipmentSlot.HEAD).is(CGItemTags.DIVING_HELMETS);
-
             ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
             CompoundTag tag = chest.getTag();
             double backtankSupply = 0;
@@ -91,14 +88,21 @@ public class ForgeEvents {
                 backtankSupply = tag.getDouble("Air");
             }
 
-            if (hasDivingHelmet && backtankSupply >= 1) {
+            if (backtankSupply >= 1) {
                 setAirSupply(player, player.getAirSupply() + 1);
-                tag.putDouble("Air", backtankSupply - 1);
+                backtankSupply -= 1;
+                tag.putDouble("Air", backtankSupply);
                 data.resetOxygenDamage();
-                player.displayClientMessage(Component.translatable("message.action_bar.remaining_oxygen", FORMAT.format(backtankSupply * 0.1), "dm³"), true);
+
+                if (backtankSupply >= 1) {
+                    player.displayClientMessage(Component.translatable("message.action_bar.remaining_oxygen", FORMAT.format(backtankSupply * 0.1d), "dm³"), true);
+                } else {
+                    player.displayClientMessage(Component.empty(), true);
+                }
             } else {
+                data.damageOxygen(1);
                 int enchantmentLevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.RESPIRATION, player);
-                long chance = Math.round(config.oxygenFactor() + enchantmentLevel * 10) * (hasDivingHelmet ? 2 : 1);
+                long chance = Math.round(config.oxygenFactor() + enchantmentLevel * 10) * (player.getItemBySlot(EquipmentSlot.HEAD).is(CGItemTags.DIVING_HELMETS) ? 2 : 1);
 
                 if (data.getOxygenDamage() % chance == 0) {
                     setAirSupply(player, player.getAirSupply() - 1);
