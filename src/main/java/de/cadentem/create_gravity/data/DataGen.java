@@ -15,7 +15,6 @@ public class DataGen {
         DataGenerator generator = event.getGenerator();
         ExistingFileHelper helper = event.getExistingFileHelper();
 
-        generator.addProvider(event.includeServer(),new CGBiomeTags(generator, helper));
         generator.addProvider(event.includeServer(), new CGEntityTags(generator, helper));
         generator.addProvider(event.includeServer(), new CGItemTags(generator, new BlockTagsProvider(generator, CreateGravity.MODID, helper), helper));
     }

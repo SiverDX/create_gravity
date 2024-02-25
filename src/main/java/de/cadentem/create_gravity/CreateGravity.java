@@ -1,21 +1,28 @@
 package de.cadentem.create_gravity;
 
+import com.mojang.logging.LogUtils;
 import de.cadentem.create_gravity.capability.GravityData;
+import de.cadentem.create_gravity.config.ServerConfig;
 import de.cadentem.create_gravity.network.NetworkHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.slf4j.Logger;
 
 @Mod(CreateGravity.MODID)
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class CreateGravity {
     public static final String MODID = "create_gravity";
+    public static final Logger LOG = LogUtils.getLogger();
 
     public CreateGravity() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
