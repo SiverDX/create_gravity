@@ -1,0 +1,5 @@
+{
+  "message.action_bar.low_oxygen_alert": "You're running out of air",
+  "message.action_bar.remaining_oxygen": "Oxygen : %s %s",
+  "death.attack.out_of_oxygen": "%s ran out of air"
+}

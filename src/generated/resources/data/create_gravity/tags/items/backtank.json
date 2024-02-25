@@ -1,0 +1,12 @@
+{
+  "values": [
+    {
+      "id": "create:copper_backtank",
+      "required": false
+    },
+    {
+      "id": "create:netherite_backtank",
+      "required": false
+    }
+  ]
+}

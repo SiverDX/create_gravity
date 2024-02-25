@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "de.cadentem.create_gravity.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "create_gravity.refmap.json",
+  "mixins": [],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
