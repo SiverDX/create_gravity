@@ -47,7 +47,7 @@ public class ForgeEvents {
     private static final int LOW_AIR = /* Avoid vanilla out of air damage / reset (at -20) */ -10;
 
     @SubscribeEvent
-    public static void applyGravity(final LivingEvent.LivingTickEvent event) {
+    public static void handleLogic(final LivingEvent.LivingTickEvent event) {
         ServerConfig.BiomeConfig config = ServerConfig.getBiomeConfig(getBiome(event.getEntity()));
         handleGravity(event.getEntity(), config);
 
@@ -135,7 +135,7 @@ public class ForgeEvents {
     }
 
     private static boolean shouldApplyLowGravity(final LivingEntity entity) {
-        if (entity.getType().is(CGEntityTags.LOW_GRAVITY_BLACKLIST) || entity instanceof Player player && (player.isCreative() || player.isSpectator())) {
+        if (/* Elytra check */ entity.isFallFlying() || entity.getType().is(CGEntityTags.LOW_GRAVITY_BLACKLIST) || entity instanceof Player player && (player.isCreative() || player.isSpectator())) {
             return false;
         }
 
