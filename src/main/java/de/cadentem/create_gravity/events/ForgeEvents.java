@@ -67,12 +67,15 @@ public class ForgeEvents {
     }
 
     public static boolean isInLowOxygenBiome(final LivingEntity entity) {
-        ServerConfig.BiomeConfig config = ServerConfig.getBiomeConfig(getBiome(entity));
+        return isInLowOxygenBiome(ServerConfig.getBiomeConfig(getBiome(entity)));
+    }
+
+    private static boolean isInLowOxygenBiome(final @Nullable ServerConfig.BiomeConfig config) {
         return config != null && config.oxygenFactor() > 0;
     }
 
     private static void handleOxygen(final Player player, final @Nullable ServerConfig.BiomeConfig config) {
-        if (config == null || config.oxygenFactor() == 0) {
+        if (!isInLowOxygenBiome(config)) {
             return;
         }
 
