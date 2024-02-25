@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public class LivingEntityMixin {
     @WrapWithCondition(method = "baseTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;setAirSupply(I)V", ordinal = 2))
     private boolean create_gravity$shouldIncrease(final LivingEntity instance, int currentAir) {
-        return instance instanceof Player && !ForgeEvents.isInLowOxygenBiome(instance);
+        return !(instance instanceof Player) || !ForgeEvents.isInLowOxygenBiome(instance);
     }
 }
