@@ -2,12 +2,11 @@ package de.cadentem.create_gravity.events;
 
 import com.google.common.cache.CacheBuilder;
 import de.cadentem.create_gravity.capability.GravityDataProvider;
+import de.cadentem.create_gravity.client.ClientProxy;
 import de.cadentem.create_gravity.config.ServerConfig;
 import de.cadentem.create_gravity.data.CGEntityTags;
 import de.cadentem.create_gravity.data.CGItemTags;
-import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -18,7 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -27,28 +25,26 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
-import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Mod.EventBusSubscriber
 public class ForgeEvents {
-    private static final Map<String, Holder<Biome>> BIOME_CACHE = CacheBuilder.newBuilder()
+    private static final Map<String, ServerConfig.BiomeConfig> BIOME_CACHE = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.SECONDS)
             .concurrencyLevel(1)
-            .<String, Holder<Biome>>build()
+            .<String, ServerConfig.BiomeConfig>build()
             .asMap();
 
     private static final UUID LOW_GRAVITY_UUID = UUID.fromString("7871c3e3-1016-4d26-b65d-b154a5399e16");
-    private static final DecimalFormat FORMAT = new DecimalFormat("00.0");
     private static final DamageSource OUT_OF_OXYGEN = new DamageSource("out_of_oxygen").bypassArmor();
 
     private static final int LOW_AIR = /* Avoid vanilla out of air damage / reset (at -20) */ -10;
 
     @SubscribeEvent
     public static void handleLogic(final LivingEvent.LivingTickEvent event) {
-        ServerConfig.BiomeConfig config = ServerConfig.getBiomeConfig(getBiome(event.getEntity()));
+        ServerConfig.BiomeConfig config = getBiomeConfig(event.getEntity());
         handleGravity(event.getEntity(), config);
 
         if (event.getEntity() instanceof Player player) {
@@ -67,7 +63,7 @@ public class ForgeEvents {
     }
 
     public static boolean isInLowOxygenBiome(final LivingEntity entity) {
-        return isInLowOxygenBiome(ServerConfig.getBiomeConfig(getBiome(entity)));
+        return isInLowOxygenBiome(getBiomeConfig(entity));
     }
 
     private static boolean isInLowOxygenBiome(final @Nullable ServerConfig.BiomeConfig config) {
@@ -88,21 +84,24 @@ public class ForgeEvents {
                 backtankSupply = tag.getInt("Air");
             }
 
-            if (backtankSupply >= 1) {
+            boolean hasDivingHelmet = player.getItemBySlot(EquipmentSlot.HEAD).is(CGItemTags.DIVING_HELMETS);
+
+            if (backtankSupply >= 1 && (!ServerConfig.FULL_SET.get() || hasDivingHelmet)) {
                 setAirSupply(player, player.getAirSupply() + 1);
-                backtankSupply -= 1;
-                tag.putInt("Air", backtankSupply);
                 data.resetOxygenDamage();
 
-                if (backtankSupply >= 1) {
-                    player.displayClientMessage(Component.translatable("message.action_bar.remaining_oxygen", FORMAT.format(backtankSupply * 0.1d), "dm³"), true);
-                } else {
-                    player.displayClientMessage(Component.empty(), true);
+                if (/* Reduce every 0.5 seconds */ player.tickCount % 10 == 0) {
+                    backtankSupply -= 1;
+                    tag.putInt("Air", backtankSupply);
+                }
+
+                if (player.getLevel().isClientSide() && player == ClientProxy.getLocalPlayer()) {
+                    ClientProxy.displayBacktankSupply(backtankSupply);
                 }
             } else {
                 data.damageOxygen(1);
                 int enchantmentLevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.RESPIRATION, player);
-                long chance = Math.round(config.oxygenFactor() + enchantmentLevel * 10) * (player.getItemBySlot(EquipmentSlot.HEAD).is(CGItemTags.DIVING_HELMETS) ? 2 : 1);
+                long chance = Math.round(config.oxygenFactor() + enchantmentLevel * 10) * (hasDivingHelmet ? 2 : 1);
 
                 if (data.getOxygenDamage() % chance == 0) {
                     setAirSupply(player, player.getAirSupply() - 1);
@@ -112,12 +111,19 @@ public class ForgeEvents {
             if (player.getMaxAirSupply() <= LOW_AIR && data.getOxygenDamage() >= ServerConfig.DAMAGE_TICK.get()) {
                 data.resetOxygenDamage();
                 player.hurt(OUT_OF_OXYGEN, ServerConfig.OUT_OF_AIR_DAMAGE.get().floatValue());
-                player.displayClientMessage(Component.translatable("message.action_bar.low_oxygen_alert"), true);
+
+                if (player.getLevel().isClientSide() && player == ClientProxy.getLocalPlayer()) {
+                    ClientProxy.displayOutOfAir();
+                }
             }
         });
     }
 
     private static void handleGravity(final LivingEntity entity, final @Nullable ServerConfig.BiomeConfig config) {
+        if (entity.getLevel().isClientSide()) {
+            return;
+        }
+
         AttributeInstance gravity = entity.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
 
         if (gravity == null) {
@@ -153,7 +159,7 @@ public class ForgeEvents {
         entity.setAirSupply(Mth.clamp(airSupply, LOW_AIR, entity.getMaxAirSupply()));
     }
 
-    private static Holder<Biome> getBiome(final LivingEntity entity) {
-        return BIOME_CACHE.computeIfAbsent(entity.getStringUUID(), key -> entity.getLevel().getBiome(entity.blockPosition()));
+    private static ServerConfig.BiomeConfig getBiomeConfig(final LivingEntity entity) {
+        return BIOME_CACHE.computeIfAbsent(entity.getStringUUID(), key -> ServerConfig.getBiomeConfig(entity.getLevel().getBiome(entity.blockPosition())));
     }
 }

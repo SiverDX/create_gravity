@@ -25,6 +25,7 @@ public class ServerConfig {
 
     public static final ForgeConfigSpec.DoubleValue OUT_OF_AIR_DAMAGE;
     public static final ForgeConfigSpec.IntValue DAMAGE_TICK;
+    public static final ForgeConfigSpec.BooleanValue FULL_SET;
 
     private static @Nullable List<BiomeConfig> BIOME_CONFIGS;
 
@@ -52,6 +53,7 @@ public class ServerConfig {
     static {
         OUT_OF_AIR_DAMAGE = BUILDER.comment("Amount of damage the entitiy takes once it has run out of air in low oxygen biomes").defineInRange("out_of_air_damage", 6f, 0, 1024);
         DAMAGE_TICK = BUILDER.comment("Entities take 1 oxygen damage per tick in low oxygen biomes - this determines how many oxygen damage ticks they can take before triggering a damage tick").defineInRange("damage_tick", 60, 0, 1000);
+        FULL_SET = BUILDER.comment("If enabled then the backtank air supply will only be used if the player is also wearing a diving helmet").define("full_set", false);
 
         String firstLine = "Syntax: \"<modid:biome>;<oxygen_factor>;<gravity_factor>\"\n";
         String secondLine = "Append # in front of the biome entry if it is a tag, e.g. #minecraft:is_end\n";

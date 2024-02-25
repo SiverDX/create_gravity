@@ -15,6 +15,8 @@ The Gravity factor has to be between `-1` (will reverse gravity) or `0` (disable
 
 In addition, the amount of damage and the rate at which the players does get damaged can be configured as well
 
+It is also configurable whether a player has to wear a diving helmet in addition to the backtank to gain access to the air supply
+
 ## Datapack
 ### Item tags
 - `create_gravity:anti_low_gravity_boots`: Will disable the gravity effect of said biome (when worn in the boots equipment slot)
