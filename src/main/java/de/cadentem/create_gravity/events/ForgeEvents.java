@@ -82,16 +82,16 @@ public class ForgeEvents {
         GravityDataProvider.getCapability(player).ifPresent(data -> {
             ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
             CompoundTag tag = chest.getTag();
-            double backtankSupply = 0;
+            int backtankSupply = 0;
 
             if (tag != null && chest.is(CGItemTags.BACKTANKS)) {
-                backtankSupply = tag.getDouble("Air");
+                backtankSupply = tag.getInt("Air");
             }
 
             if (backtankSupply >= 1) {
                 setAirSupply(player, player.getAirSupply() + 1);
                 backtankSupply -= 1;
-                tag.putDouble("Air", backtankSupply);
+                tag.putInt("Air", backtankSupply);
                 data.resetOxygenDamage();
 
                 if (backtankSupply >= 1) {
