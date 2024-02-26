@@ -1,12 +1,17 @@
 package de.cadentem.create_gravity.events;
 
 import com.google.common.cache.CacheBuilder;
+import de.cadentem.create_gravity.CreateGravity;
 import de.cadentem.create_gravity.capability.GravityDataProvider;
 import de.cadentem.create_gravity.client.ClientProxy;
 import de.cadentem.create_gravity.config.ServerConfig;
 import de.cadentem.create_gravity.data.CGEntityTags;
 import de.cadentem.create_gravity.data.CGItemTags;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -17,10 +22,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -39,8 +46,26 @@ public class ForgeEvents {
 
     private static final UUID LOW_GRAVITY_UUID = UUID.fromString("7871c3e3-1016-4d26-b65d-b154a5399e16");
     private static final DamageSource OUT_OF_OXYGEN = new DamageSource("out_of_oxygen").bypassArmor();
+    private static final ResourceLocation ADVANCEMENT = CreateGravity.location("place_banner_in_the_end");
 
     private static final int LOW_AIR = /* Avoid vanilla out of air damage / reset (at -20) */ -10;
+
+    @SubscribeEvent
+    public static void handleAdvancement(final BlockEvent.EntityPlaceEvent event) {
+        if (event.getLevel().isClientSide()) {
+            return;
+        }
+
+        if (event.getEntity() instanceof ServerPlayer serverPlayer && serverPlayer.getLevel().dimension() == Level.END && event.getPlacedBlock().is(BlockTags.BANNERS)) {
+            Advancement advancement = serverPlayer.getLevel().getServer().getAdvancements().getAdvancement(ADVANCEMENT);
+
+            if (advancement == null) {
+                return;
+            }
+
+            serverPlayer.getAdvancements().getOrStartProgress(advancement).getRemainingCriteria().forEach(criteria -> serverPlayer.getAdvancements().award(advancement, criteria));
+        }
+    }
 
     @SubscribeEvent
     public static void handleLogic(final LivingEvent.LivingTickEvent event) {
