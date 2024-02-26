@@ -101,10 +101,10 @@ public class ForgeEvents {
             } else {
                 data.damageOxygen(1);
                 int enchantmentLevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.RESPIRATION, player);
-                long chance = Math.round(config.oxygenFactor() + enchantmentLevel * 10) * (hasDivingHelmet ? 2 : 1);
+                int rate = config.oxygenFactor() + enchantmentLevel * 10 * (hasDivingHelmet ? 4 : 1);
 
-                if (data.getOxygenDamage() % chance == 0) {
-                    setAirSupply(player, player.getAirSupply() - 1);
+                if (data.getOxygenDamage() % rate == 0) {
+                    setAirSupply(player, player.getAirSupply() - ServerConfig.DEPLETION_RATE.get());
                 }
             }
 
@@ -136,7 +136,7 @@ public class ForgeEvents {
 
         if (shouldApplyLowGravity) {
             if (entity.getDeltaMovement().y() != 0) {
-                entity.fallDistance *= 0.9f;
+                entity.fallDistance *= 0.925f;
             }
 
             if (!gravity.hasModifier(modifier)) {

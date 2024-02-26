@@ -3,7 +3,6 @@ package de.cadentem.create_gravity.config;
 import de.cadentem.create_gravity.CreateGravity;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,21 +16,22 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ServerConfig {
-    public static final double OXYGEN_FACTOR_DEFAULT = 100;
-    public static final double GRAVITY_FACTOR_DEFAULT = -0.8;
+    private static final int OXYGEN_FACTOR_DEFAULT = 100;
+    private static final double GRAVITY_FACTOR_DEFAULT = -0.8;
 
     public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static final ForgeConfigSpec SPEC;
 
     public static final ForgeConfigSpec.DoubleValue OUT_OF_AIR_DAMAGE;
     public static final ForgeConfigSpec.IntValue DAMAGE_TICK;
+    public static final ForgeConfigSpec.IntValue DEPLETION_RATE;
     public static final ForgeConfigSpec.BooleanValue FULL_SET;
 
     private static @Nullable List<BiomeConfig> BIOME_CONFIGS;
 
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> BIOME_CONFIGS_INTERNAL;
 
-    public record BiomeConfig(ResourceLocation biome, boolean isTag, double oxygenFactor, double gravityFactor) {
+    public record BiomeConfig(ResourceLocation biome, boolean isTag, int oxygenFactor, double gravityFactor) {
         public static @Nullable BiomeConfig fromString(final @NotNull String data) {
             String[] split = data.split(";");
             String biome = getData(split, 0);
@@ -40,8 +40,8 @@ public class ServerConfig {
 
             if (biome != null) {
                 boolean isTag = biome.startsWith("#");
-                double oxygenFactor = oxygenFactorRaw != null ? Math.max(0, Double.parseDouble(oxygenFactorRaw)) : OXYGEN_FACTOR_DEFAULT;
-                double gravityFactor = gravityFactorRaw != null ? Mth.clamp(Double.parseDouble(gravityFactorRaw), -1, 0) : GRAVITY_FACTOR_DEFAULT;
+                int oxygenFactor = oxygenFactorRaw != null ? Integer.parseInt(oxygenFactorRaw) : OXYGEN_FACTOR_DEFAULT;
+                double gravityFactor = gravityFactorRaw != null ? Double.parseDouble(gravityFactorRaw) : GRAVITY_FACTOR_DEFAULT;
 
                 return new BiomeConfig(new ResourceLocation(isTag ? biome.substring(1) : biome), isTag, oxygenFactor, gravityFactor);
             }
@@ -53,6 +53,7 @@ public class ServerConfig {
     static {
         OUT_OF_AIR_DAMAGE = BUILDER.comment("Amount of damage the entitiy takes once it has run out of air in low oxygen biomes").defineInRange("out_of_air_damage", 6f, 0, 1024);
         DAMAGE_TICK = BUILDER.comment("Entities take 1 oxygen damage per tick in low oxygen biomes - this determines how many oxygen damage ticks they can take before triggering a damage tick").defineInRange("damage_tick", 60, 0, 1000);
+        DEPLETION_RATE = BUILDER.comment("The amount of oxygen lost per tick").defineInRange("depletion_rate", 4, 0, 100);
         FULL_SET = BUILDER.comment("If enabled then the backtank air supply will only be used if the player is also wearing a diving helmet").define("full_set", false);
 
         String firstLine = "Syntax: \"<modid:biome>;<oxygen_factor>;<gravity_factor>\"\n";
@@ -137,7 +138,7 @@ public class ServerConfig {
 
     private static boolean isOxygenFactorInvalid(final String oxygenFactor) {
         try {
-            return Double.parseDouble(oxygenFactor) < 0;
+            return Integer.parseInt(oxygenFactor) < 0;
         } catch (NumberFormatException ignored) {
             return true;
         }
@@ -145,7 +146,8 @@ public class ServerConfig {
 
     private static boolean isGravityFactorInvalid(final String gravityFactor) {
         try {
-            return Double.parseDouble(gravityFactor) > 0;
+            double factor = Double.parseDouble(gravityFactor);
+            return factor > 0 || factor < -1;
         } catch (NumberFormatException ignored) {
             return true;
         }
