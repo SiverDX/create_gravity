@@ -24,7 +24,8 @@ public class ServerConfig {
 
     public static final ForgeConfigSpec.DoubleValue OUT_OF_AIR_DAMAGE;
     public static final ForgeConfigSpec.IntValue DAMAGE_TICK;
-    public static final ForgeConfigSpec.IntValue DEPLETION_RATE;
+    public static final ForgeConfigSpec.IntValue OXYGEN_DEPLETION_AMOUNT;
+    public static final ForgeConfigSpec.IntValue BACKTANK_DEPLETION_RATE;
     public static final ForgeConfigSpec.BooleanValue FULL_SET;
 
     private static @Nullable List<BiomeConfig> BIOME_CONFIGS;
@@ -53,7 +54,8 @@ public class ServerConfig {
     static {
         OUT_OF_AIR_DAMAGE = BUILDER.comment("Amount of damage the entitiy takes once it has run out of air in low oxygen biomes").defineInRange("out_of_air_damage", 6f, 0, 1024);
         DAMAGE_TICK = BUILDER.comment("Entities take 1 oxygen damage per tick in low oxygen biomes - this determines how many oxygen damage ticks they can take before triggering a damage tick").defineInRange("damage_tick", 60, 0, 1000);
-        DEPLETION_RATE = BUILDER.comment("The amount of oxygen lost per tick").defineInRange("depletion_rate", 4, 0, 100);
+        OXYGEN_DEPLETION_AMOUNT = BUILDER.comment("The amount of oxygen lost per tick").defineInRange("oxygen_depletion_amount", 4, 0, 100);
+        BACKTANK_DEPLETION_RATE = BUILDER.comment("The rate at which the backtank air supply is used up (in ticks, 20 = 1 second) (0 disables the depletion)").defineInRange("backtank_depletion_rate", 20, 0, 1000);
         FULL_SET = BUILDER.comment("If enabled then the backtank air supply will only be used if the player is also wearing a diving helmet").define("full_set", false);
 
         String firstLine = "Syntax: \"<modid:biome>;<oxygen_factor>;<gravity_factor>\"\n";

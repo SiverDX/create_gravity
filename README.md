@@ -17,6 +17,7 @@ In addition, the following things can be configured as well:
 - Amount of damage and the rate at which the player does get damaged
 - Whether wearing a diving helmet is required to make the backtank functional (i.e. use the air supply)
 - The rate at which the player loses oxygen (this will always be slower if a player is wearing a diving helmet)
+- The rate at which the backtank air supply gets depleted
 
 ## Datapack
 ### Item tags

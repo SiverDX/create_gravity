@@ -115,7 +115,9 @@ public class ForgeEvents {
                 setAirSupply(player, player.getAirSupply() + 1);
                 data.resetOxygenDamage();
 
-                if (/* Reduce every 0.5 seconds */ player.tickCount % 10 == 0) {
+                int depletionRate = ServerConfig.BACKTANK_DEPLETION_RATE.get();
+
+                if (depletionRate > 0 && player.tickCount % depletionRate == 0) {
                     backtankSupply -= 1;
                     tag.putInt("Air", backtankSupply);
                 }
@@ -129,7 +131,7 @@ public class ForgeEvents {
                 int rate = config.oxygenFactor() + enchantmentLevel * 10 * (hasDivingHelmet ? 4 : 1);
 
                 if (data.getOxygenDamage() % rate == 0) {
-                    setAirSupply(player, player.getAirSupply() - ServerConfig.DEPLETION_RATE.get());
+                    setAirSupply(player, player.getAirSupply() - ServerConfig.OXYGEN_DEPLETION_AMOUNT.get());
                 }
             }
 
