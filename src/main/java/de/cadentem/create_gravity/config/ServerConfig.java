@@ -64,7 +64,7 @@ public class ServerConfig {
         String fourthLine = "Oxygen factor needs to be positive (0 or higher) - If it is 0 the effect will be disabled in the biome\n";
         String lastLine = "The factors are optional (default values will apply (100;0.8)) - syntax in that case is \"<modid:biome>;;\" or \"<modid:biome>;<oxygen_factor>;\" or \"<modid:biome>;;<gravity_factor>\"";
 
-        BIOME_CONFIGS_INTERNAL = BUILDER.comment(firstLine + secondLine + thirdLine + fourthLine + lastLine).defineList("oxygen_factors", List.of("#minecraft:is_end;;"), ServerConfig::validateBiomeConfig);
+        BIOME_CONFIGS_INTERNAL = BUILDER.comment(firstLine + secondLine + thirdLine + fourthLine + lastLine).defineList("biome_configs", List.of("#minecraft:is_end;;"), ServerConfig::validateBiomeConfig);
 
         SPEC = BUILDER.build();
     }
@@ -101,7 +101,7 @@ public class ServerConfig {
         if (object instanceof String string) {
             String[] data = string.split(";");
 
-            if (data.length != 3) {
+            if (string.length() - string.replace(";", "").length() != 2) {
                 return false;
             }
 
