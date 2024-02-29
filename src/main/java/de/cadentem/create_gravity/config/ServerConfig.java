@@ -60,7 +60,7 @@ public class ServerConfig {
                 double gravityFactor = gravityFactorRaw != null ? Double.parseDouble(gravityFactorRaw) : GRAVITY_FACTOR_DEFAULT;
                 ResourceLocation location = new ResourceLocation(isTag ? biome.substring(1) : biome);
 
-                Registry<Biome> registry = server.registryAccess().registry(Registry.BIOME_REGISTRY).orElseThrow();
+                Registry<Biome> registry = server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
 
                 if (isTag) {
                     Optional<TagKey<Biome>> optional = registry.getTagNames().filter(tag -> tag.location().equals(location)).findFirst();
