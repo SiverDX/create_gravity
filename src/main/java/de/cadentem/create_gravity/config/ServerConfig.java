@@ -2,7 +2,11 @@ package de.cadentem.create_gravity.config;
 
 import de.cadentem.create_gravity.CreateGravity;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -13,6 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ServerConfig {
@@ -28,26 +35,51 @@ public class ServerConfig {
     public static final ForgeConfigSpec.IntValue BACKTANK_DEPLETION_RATE;
     public static final ForgeConfigSpec.BooleanValue FULL_SET;
 
+    // Needed to get access to the full list of biome tags
+    public static @Nullable MinecraftServer server;
     private static @Nullable List<BiomeConfig> BIOME_CONFIGS;
 
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> BIOME_CONFIGS_INTERNAL;
 
-    public record BiomeConfig(ResourceLocation biome, boolean isTag, int oxygenFactor, double gravityFactor) {
+    public record BiomeConfig(@Nullable Holder<Biome> biome, @Nullable TagKey<Biome> tag, int oxygenFactor, double gravityFactor) {
         public static @Nullable BiomeConfig fromString(final @NotNull String data) {
+            if (server == null) {
+                return null;
+            }
+
             String[] split = data.split(";");
             String biome = getData(split, 0);
             String oxygenFactorRaw = getData(split, 1);
             String gravityFactorRaw = getData(split, 2);
 
+            BiomeConfig config = null;
+
             if (biome != null) {
                 boolean isTag = biome.startsWith("#");
                 int oxygenFactor = oxygenFactorRaw != null ? Integer.parseInt(oxygenFactorRaw) : OXYGEN_FACTOR_DEFAULT;
                 double gravityFactor = gravityFactorRaw != null ? Double.parseDouble(gravityFactorRaw) : GRAVITY_FACTOR_DEFAULT;
+                ResourceLocation location = new ResourceLocation(isTag ? biome.substring(1) : biome);
 
-                return new BiomeConfig(new ResourceLocation(isTag ? biome.substring(1) : biome), isTag, oxygenFactor, gravityFactor);
+                Registry<Biome> registry = server.registryAccess().registry(Registry.BIOME_REGISTRY).orElseThrow();
+
+                if (isTag) {
+                    Optional<TagKey<Biome>> optional = registry.getTagNames().filter(tag -> tag.location().equals(location)).findFirst();
+                    config = optional.map(key -> new BiomeConfig(null, key, oxygenFactor, gravityFactor)).orElse(null);
+                } else {
+                    Optional<Holder.Reference<Biome>> optional = registry.holders().filter(holder -> {
+                        Optional<ResourceKey<Biome>> key = holder.unwrapKey();
+                        return key.map(biomeResourceKey -> biomeResourceKey.location().equals(location)).orElse(false);
+                    }).findFirst();
+
+                    config = optional.map(biomeHolder -> new BiomeConfig(biomeHolder, null, oxygenFactor, gravityFactor)).orElse(null);
+                }
             }
 
-            return null;
+            if (config == null) {
+                CreateGravity.LOG.warn("Configuration not loaded for [{}]", data);
+            }
+
+            return config;
         }
     }
 
@@ -62,7 +94,7 @@ public class ServerConfig {
         String secondLine = "Append # in front of the biome entry if it is a tag, e.g. #minecraft:is_end\n";
         String thirdLine = "Gravity factor needs to be between -1 and 0 (-1 disables gravity entirely) - If it is 0 the effect will be disabled in the biome\n";
         String fourthLine = "Oxygen factor needs to be positive (0 or higher) - If it is 0 the effect will be disabled in the biome\n";
-        String lastLine = "The factors are optional (default values will apply (100;0.8)) - syntax in that case is \"<modid:biome>;;\" or \"<modid:biome>;<oxygen_factor>;\" or \"<modid:biome>;;<gravity_factor>\"";
+        String lastLine = "The factors are optional (default values will apply (100;-0.8)) - syntax in that case is \"<modid:biome>;;\" or \"<modid:biome>;<oxygen_factor>;\" or \"<modid:biome>;;<gravity_factor>\"";
 
         BIOME_CONFIGS_INTERNAL = BUILDER.comment(firstLine + secondLine + thirdLine + fourthLine + lastLine).defineList("biome_configs", List.of("#minecraft:is_end;;"), ServerConfig::validateBiomeConfig);
 
@@ -70,13 +102,17 @@ public class ServerConfig {
     }
 
     @SubscribeEvent
-    public static void reloadConfig(final ModConfigEvent event) {
+    public static void reloadConfig(final ModConfigEvent.Reloading event) {
         if (event.getConfig().getSpec() == SPEC) {
-            List<BiomeConfig> newConfigs = new ArrayList<>();
-            BIOME_CONFIGS_INTERNAL.get().forEach(data -> newConfigs.add(BiomeConfig.fromString(data)));
-            BIOME_CONFIGS = newConfigs;
-            CreateGravity.LOG.info("Reloaded configuration");
+            reloadConfig();
         }
+    }
+
+    public static void reloadConfig() {
+        List<BiomeConfig> newConfigs = new ArrayList<>();
+        BIOME_CONFIGS_INTERNAL.get().forEach(data -> newConfigs.add(BiomeConfig.fromString(data)));
+        BIOME_CONFIGS = newConfigs.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        CreateGravity.LOG.info("Reloaded configuration");
     }
 
     public static @Nullable BiomeConfig getBiomeConfig(final Holder<Biome> biome) {
@@ -85,11 +121,11 @@ public class ServerConfig {
         }
 
         for (BiomeConfig config : BIOME_CONFIGS) {
-            if (config.isTag()) {
-                if (!biome.tags().filter(tag -> tag.location().equals(config.biome())).toList().isEmpty()) {
+            if (config.tag() != null) {
+                if (biome.is(config.tag())) {
                     return config;
                 }
-            } else if (biome.is(config.biome())) {
+            } else if (config.biome() != null && biome.equals(config.biome())) {
                 return config;
             }
         }

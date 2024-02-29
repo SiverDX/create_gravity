@@ -24,10 +24,12 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -188,5 +190,19 @@ public class ForgeEvents {
 
     private static ServerConfig.BiomeConfig getBiomeConfig(final LivingEntity entity) {
         return BIOME_CACHE.computeIfAbsent(entity.getStringUUID(), key -> ServerConfig.getBiomeConfig(entity.getLevel().getBiome(entity.blockPosition())));
+    }
+
+    @SubscribeEvent
+    public static void setServer(final ServerStartedEvent event) {
+        ServerConfig.server = event.getServer();
+    }
+
+    @SubscribeEvent
+    public static void reloadConfiguration(final TagsUpdatedEvent event) {
+        if (!ServerConfig.SPEC.isLoaded()) {
+            return;
+        }
+
+        ServerConfig.reloadConfig();
     }
 }
