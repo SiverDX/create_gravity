@@ -55,7 +55,7 @@ public class CapabilityHandler {
 
     @SubscribeEvent
     public static void removeCachedEntry(final EntityLeaveLevelEvent event) {
-        Map<Integer, LazyOptional<GravityData>> cache = GravityDataProvider.CACHE.get(event.getEntity().getLevel());
+        Map<Integer, LazyOptional<GravityData>> cache = GravityDataProvider.CACHE.get(event.getEntity().level());
 
         if (cache != null) {
             cache.remove(event.getEntity().getId());

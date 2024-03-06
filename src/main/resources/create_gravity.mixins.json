@@ -4,9 +4,7 @@
   "package": "de.cadentem.create_gravity.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "create_gravity.refmap.json",
-  "mixins": [
-    "LivingEntityMixin"
-  ],
+  "mixins": [],
   "client": [],
   "injectors": {
     "defaultRequire": 1

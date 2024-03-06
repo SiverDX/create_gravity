@@ -3,6 +3,7 @@ package de.cadentem.create_gravity.config;
 import de.cadentem.create_gravity.CreateGravity;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -62,7 +63,7 @@ public class ServerConfig {
                 double gravityFactor = gravityFactorRaw != null ? Double.parseDouble(gravityFactorRaw) : GRAVITY_FACTOR_DEFAULT;
                 ResourceLocation location = new ResourceLocation(isTag ? biome.substring(1) : biome);
 
-                Registry<Biome> registry = server.registryAccess().registryOrThrow(Registry.BIOME_REGISTRY);
+                Registry<Biome> registry = server.registryAccess().registryOrThrow(Registries.BIOME);
 
                 if (isTag) {
                     Optional<TagKey<Biome>> optional = registry.getTagNames().filter(tag -> tag.location().equals(location)).findFirst();

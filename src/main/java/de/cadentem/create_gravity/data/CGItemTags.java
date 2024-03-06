@@ -1,26 +1,29 @@
 package de.cadentem.create_gravity.data;
 
 import de.cadentem.create_gravity.CreateGravity;
-import net.minecraft.core.Registry;
-import net.minecraft.data.DataGenerator;
-import net.minecraft.data.tags.BlockTagsProvider;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CompletableFuture;
 
 public class CGItemTags extends ItemTagsProvider {
-    public static final TagKey<Item> ANTI_LOW_GRAVITY_BOOTS = TagKey.create(Registry.ITEM_REGISTRY, CreateGravity.location("anti_low_gravity_boots"));
-    public static final TagKey<Item> BACKTANKS = TagKey.create(Registry.ITEM_REGISTRY, CreateGravity.location("backtanks"));
-    public static final TagKey<Item> DIVING_HELMETS = TagKey.create(Registry.ITEM_REGISTRY, CreateGravity.location("diving_helmets"));
+    public static final TagKey<Item> ANTI_LOW_GRAVITY_BOOTS = TagKey.create(Registries.ITEM, CreateGravity.location("anti_low_gravity_boots"));
+    public static final TagKey<Item> BACKTANKS = TagKey.create(Registries.ITEM, CreateGravity.location("backtanks"));
+    public static final TagKey<Item> DIVING_HELMETS = TagKey.create(Registries.ITEM, CreateGravity.location("diving_helmets"));
 
-    public CGItemTags(final DataGenerator generator, final BlockTagsProvider provider, final ExistingFileHelper helper) {
-        super(generator, provider, CreateGravity.MODID, helper);
+    public CGItemTags(final PackOutput output, final CompletableFuture<HolderLookup.Provider> provider, final ExistingFileHelper helper) {
+        super(output, provider, CompletableFuture.completedFuture(null), CreateGravity.MODID, helper);
     }
 
     @Override
-    protected void addTags() {
+    protected void addTags(@NotNull final HolderLookup.Provider provider) {
         tag(ANTI_LOW_GRAVITY_BOOTS)
                 .addOptional(new ResourceLocation("create", "copper_diving_boots"))
                 .addOptional(new ResourceLocation("create", "netherite_diving_boots"));

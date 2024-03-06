@@ -1,8 +1,6 @@
 package de.cadentem.create_gravity.data;
 
-import de.cadentem.create_gravity.CreateGravity;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.tags.BlockTagsProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.data.event.GatherDataEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -15,7 +13,9 @@ public class DataGen {
         DataGenerator generator = event.getGenerator();
         ExistingFileHelper helper = event.getExistingFileHelper();
 
-        generator.addProvider(event.includeServer(), new CGEntityTags(generator, helper));
-        generator.addProvider(event.includeServer(), new CGItemTags(generator, new BlockTagsProvider(generator, CreateGravity.MODID, helper), helper));
+        generator.addProvider(event.includeServer(), new CGRegistryProvider(generator.getPackOutput(), event.getLookupProvider()));
+        generator.addProvider(event.includeServer(), new CGEntityTags(generator.getPackOutput(), event.getLookupProvider(), helper));
+        generator.addProvider(event.includeServer(), new CGItemTags(generator.getPackOutput(), event.getLookupProvider(), helper));
+        generator.addProvider(event.includeServer(), new CGDamageTypeTags(generator.getPackOutput(), event.getLookupProvider(), helper));
     }
 }

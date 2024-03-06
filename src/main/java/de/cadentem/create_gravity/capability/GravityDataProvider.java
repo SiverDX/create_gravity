@@ -38,7 +38,7 @@ public class GravityDataProvider implements ICapabilitySerializable<CompoundTag>
 
     public static LazyOptional<GravityData> getCapability(final Entity entity) {
         if (entity instanceof Player) {
-            Map<Integer, LazyOptional<GravityData>> cache = CACHE.computeIfAbsent(entity.getLevel(), key -> new HashMap<>());
+            Map<Integer, LazyOptional<GravityData>> cache = CACHE.computeIfAbsent(entity.level(), key -> new HashMap<>());
             LazyOptional<GravityData> capability = cache.get(entity.getId());
 
             if (capability == null) {
