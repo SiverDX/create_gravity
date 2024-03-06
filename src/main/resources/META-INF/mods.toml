@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[43,)"
+loaderVersion = "[47,)"
 license="${mod_license}"
 
 [[mods]]
@@ -17,13 +17,13 @@ itemIcon = "minecraft:end_stone"
 [[dependencies.create_gravity]]
 modId = "forge"
 mandatory = true
-versionRange = "[43,)"
+versionRange = "[47.1.7,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.create_gravity]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.19.2,)"
+versionRange = "[1.20.1,)"
 ordering = "NONE"
 side = "BOTH"
