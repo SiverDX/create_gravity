@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -25,6 +26,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.TagsUpdatedEvent;
+import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -41,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 @Mod.EventBusSubscriber
 public class ForgeEvents {
     private static final Map<String, ServerConfig.BiomeConfig> BIOME_CACHE = CacheBuilder.newBuilder()
-            .expireAfterWrite(1, TimeUnit.SECONDS)
+            .expireAfterWrite(3, TimeUnit.SECONDS)
             .concurrencyLevel(1)
             .<String, ServerConfig.BiomeConfig>build()
             .asMap();
@@ -80,13 +82,34 @@ public class ForgeEvents {
     }
 
     @SubscribeEvent
+    public static void setServer(final ServerStartedEvent event) {
+        ServerConfig.server = event.getServer();
+    }
+
+    @SubscribeEvent
+    public static void reloadConfiguration(final TagsUpdatedEvent event) {
+        if (!ServerConfig.SPEC.isLoaded()) {
+            return;
+        }
+
+        ServerConfig.reloadConfig();
+    }
+
+    @SubscribeEvent
     public static void removeCachedEntry(final EntityLeaveLevelEvent event) {
-        BIOME_CACHE.remove(event.getEntity().getStringUUID());
+        removeCachedEntry(event.getEntity());
     }
 
     @SubscribeEvent
     public static void removeCachedEntry(final PlayerEvent.PlayerChangedDimensionEvent event) {
-        BIOME_CACHE.remove(event.getEntity().getStringUUID());
+        removeCachedEntry(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void removeCachedEntry(final EntityEvent.EnteringSection event) {
+        if (event.getEntity() instanceof Player) {
+            removeCachedEntry(event.getEntity());
+        }
     }
 
     public static boolean isInLowOxygenBiome(final LivingEntity entity) {
@@ -189,20 +212,18 @@ public class ForgeEvents {
     }
 
     private static ServerConfig.BiomeConfig getBiomeConfig(final LivingEntity entity) {
+        if (ServerConfig.CACHE_TIME.get() == 0) {
+            return ServerConfig.getBiomeConfig(entity.getLevel().getBiome(entity.blockPosition()));
+        }
+
         return BIOME_CACHE.computeIfAbsent(entity.getStringUUID(), key -> ServerConfig.getBiomeConfig(entity.getLevel().getBiome(entity.blockPosition())));
     }
 
-    @SubscribeEvent
-    public static void setServer(final ServerStartedEvent event) {
-        ServerConfig.server = event.getServer();
-    }
-
-    @SubscribeEvent
-    public static void reloadConfiguration(final TagsUpdatedEvent event) {
-        if (!ServerConfig.SPEC.isLoaded()) {
+    private static void removeCachedEntry(final Entity entity) {
+        if (ServerConfig.CACHE_TIME.get() == 0) {
             return;
         }
 
-        ServerConfig.reloadConfig();
+        BIOME_CACHE.remove(entity.getStringUUID());
     }
 }

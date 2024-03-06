@@ -35,6 +35,8 @@ public class ServerConfig {
     public static final ForgeConfigSpec.IntValue BACKTANK_DEPLETION_RATE;
     public static final ForgeConfigSpec.BooleanValue FULL_SET;
 
+    public static final ForgeConfigSpec.IntValue CACHE_TIME;
+
     // Needed to get access to the full list of biome tags
     public static @Nullable MinecraftServer server;
     private static @Nullable List<BiomeConfig> BIOME_CONFIGS;
@@ -97,6 +99,7 @@ public class ServerConfig {
         String lastLine = "The factors are optional (default values will apply (100;-0.8)) - syntax in that case is \"<modid:biome>;;\" or \"<modid:biome>;<oxygen_factor>;\" or \"<modid:biome>;;<gravity_factor>\"";
 
         BIOME_CONFIGS_INTERNAL = BUILDER.comment(firstLine + secondLine + thirdLine + fourthLine + lastLine).defineList("biome_configs", List.of("#minecraft:is_end;;"), ServerConfig::validateBiomeConfig);
+        CACHE_TIME = BUILDER.comment("The amount of seconds the current biome is cached - set it to 0 to disable caching (and therefor remove any update delay)").defineInRange("cache_time", 3, 0, 10);
 
         SPEC = BUILDER.build();
     }
