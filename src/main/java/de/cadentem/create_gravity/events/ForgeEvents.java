@@ -139,7 +139,7 @@ public class ForgeEvents {
                 }
             }
 
-            if (player.getMaxAirSupply() <= LOW_AIR && data.getOxygenDamage() >= ServerConfig.DAMAGE_TICK.get()) {
+            if (player.getAirSupply() <= LOW_AIR && data.getOxygenDamage() >= ServerConfig.DAMAGE_TICK.get()) {
                 data.resetOxygenDamage();
                 player.hurt(CGDamageTypes.outOfOxygen(player.level()), ServerConfig.OUT_OF_AIR_DAMAGE.get().floatValue());
 
