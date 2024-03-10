@@ -1,6 +1,7 @@
 package de.cadentem.create_gravity.network;
 
-import de.cadentem.create_gravity.client.ClientProxy;
+import de.cadentem.create_gravity.CreateGravity;
+import de.cadentem.create_gravity.capability.GravityDataProvider;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkDirection;
@@ -21,7 +22,7 @@ public record SyncGravityData(CompoundTag tag) {
         NetworkEvent.Context context = contextSupplier.get();
 
         if (context.getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-            context.enqueueWork(() -> ClientProxy.handleSyncPlayerData(packet.tag));
+            context.enqueueWork(() -> GravityDataProvider.getCapability(CreateGravity.PROXY.getLocalPlayer()).ifPresent(data -> data.deserializeNBT(packet.tag)));
         }
 
         context.setPacketHandled(true);

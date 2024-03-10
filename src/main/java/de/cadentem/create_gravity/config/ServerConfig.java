@@ -7,6 +7,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -113,10 +114,30 @@ public class ServerConfig {
     }
 
     public static void reloadConfig() {
+        if (BIOME_CONFIGS_INTERNAL.get().isEmpty()) {
+            CreateGravity.LOG.warn("No configuration entries are present");
+            return;
+        }
+
         List<BiomeConfig> newConfigs = new ArrayList<>();
         BIOME_CONFIGS_INTERNAL.get().forEach(data -> newConfigs.add(BiomeConfig.fromString(data)));
         BIOME_CONFIGS = newConfigs.stream().filter(Objects::nonNull).collect(Collectors.toList());
-        CreateGravity.LOG.info("Reloaded configuration");
+        CreateGravity.LOG.info("Reloaded configuration: [{}]", BIOME_CONFIGS);
+    }
+
+    public static int reloadConfig(final ServerPlayer initiator) {
+        if (server == null) {
+            server = initiator.getLevel().getServer();
+            CreateGravity.LOG.warn("Server was not set");
+        }
+
+        reloadConfig();
+
+        if (BIOME_CONFIGS == null) {
+            throw new IllegalStateException("Biome config is null after reloading configuration");
+        }
+
+        return BIOME_CONFIGS.size();
     }
 
     public static @Nullable BiomeConfig getBiomeConfig(final Holder<Biome> biome) {

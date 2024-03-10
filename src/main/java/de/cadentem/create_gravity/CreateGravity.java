@@ -3,10 +3,14 @@ package de.cadentem.create_gravity;
 import com.mojang.logging.LogUtils;
 import de.cadentem.create_gravity.capability.GravityData;
 import de.cadentem.create_gravity.config.ServerConfig;
+import de.cadentem.create_gravity.network.ClientProxy;
 import de.cadentem.create_gravity.network.NetworkHandler;
+import de.cadentem.create_gravity.network.Proxy;
+import de.cadentem.create_gravity.network.ServerProxy;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -19,6 +23,8 @@ import org.slf4j.Logger;
 public class CreateGravity {
     public static final String MODID = "create_gravity";
     public static final Logger LOG = LogUtils.getLogger();
+
+    public static final Proxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
 
     public CreateGravity() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
