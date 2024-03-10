@@ -1,4 +1,5 @@
 {
+  "message.system.create_gravity.reloaded_config": "[Create Gravity] config has been reloaded with %s %s",
   "message.action_bar.low_oxygen_alert": "You're running out of air",
   "message.action_bar.remaining_oxygen": "Oxygen : %s %s",
 

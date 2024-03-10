@@ -83,9 +83,6 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    /* --- Dependencies --- */
-    compileOnly fg.deobf("dev:create_gravity:1.19.2-1.1.0")
-
     /* --- Mixin Configuration --- */
 //    implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-common:${mixin_squared_version}"))
 //    implementation(jarJar("com.github.bawnorton.mixinsquared:mixinsquared-forge:${mixin_squared_version}")) {

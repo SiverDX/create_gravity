@@ -1,14 +1,17 @@
 package de.cadentem.create_gravity.events;
 
 import com.google.common.cache.CacheBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import de.cadentem.create_gravity.CreateGravity;
 import de.cadentem.create_gravity.capability.GravityDataProvider;
-import de.cadentem.create_gravity.client.ClientProxy;
 import de.cadentem.create_gravity.config.ServerConfig;
 import de.cadentem.create_gravity.data.CGEntityTags;
 import de.cadentem.create_gravity.data.CGItemTags;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
@@ -25,6 +28,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
@@ -36,6 +40,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
+import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +56,7 @@ public class ForgeEvents {
     private static final UUID LOW_GRAVITY_UUID = UUID.fromString("7871c3e3-1016-4d26-b65d-b154a5399e16");
     private static final DamageSource OUT_OF_OXYGEN = new DamageSource("out_of_oxygen").bypassArmor();
     private static final ResourceLocation ADVANCEMENT = CreateGravity.location("place_banner_in_the_end");
+    private static final DecimalFormat FORMAT = new DecimalFormat("00.0");
 
     private static final int LOW_AIR = /* Avoid vanilla out of air damage / reset (at -20) */ -10;
 
@@ -84,6 +90,7 @@ public class ForgeEvents {
     @SubscribeEvent
     public static void setServer(final ServerStartedEvent event) {
         ServerConfig.server = event.getServer();
+        ServerConfig.reloadConfig();
     }
 
     @SubscribeEvent
@@ -110,6 +117,19 @@ public class ForgeEvents {
         if (event.getEntity() instanceof Player) {
             removeCachedEntry(event.getEntity());
         }
+    }
+
+    @SubscribeEvent
+    public static void registerCommands(final RegisterCommandsEvent event) {
+        LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal(CreateGravity.MODID).requires(source -> source.hasPermission(Commands.LEVEL_ADMINS));
+
+        builder.then(Commands.literal("reload_config").executes(context -> {
+            int configSize = ServerConfig.reloadConfig(context.getSource().getPlayer());
+            context.getSource().sendSuccess(Component.translatable("message.system.create_gravity.reloaded_config", configSize, configSize == 1 ? "entry" : "entries"), false);
+            return 1;
+        }));
+
+        event.getDispatcher().register(builder);
     }
 
     public static boolean isInLowOxygenBiome(final LivingEntity entity) {
@@ -147,8 +167,16 @@ public class ForgeEvents {
                     tag.putInt("Air", backtankSupply);
                 }
 
-                if (player.getLevel().isClientSide() && player == ClientProxy.getLocalPlayer()) {
-                    ClientProxy.displayBacktankSupply(backtankSupply);
+                if (player.getLevel().isClientSide() && player == CreateGravity.PROXY.getLocalPlayer()) {
+                    Component component;
+
+                    if (backtankSupply >= 1) {
+                        component = Component.translatable("message.action_bar.remaining_oxygen", FORMAT.format(backtankSupply * 0.1d), "dm³");
+                    } else {
+                        component = Component.empty();
+                    }
+
+                    CreateGravity.PROXY.setOverlayMessage(component);
                 }
             } else {
                 data.damageOxygen(1);
@@ -164,8 +192,8 @@ public class ForgeEvents {
                 data.resetOxygenDamage();
                 player.hurt(OUT_OF_OXYGEN, ServerConfig.OUT_OF_AIR_DAMAGE.get().floatValue());
 
-                if (player.getLevel().isClientSide() && player == ClientProxy.getLocalPlayer()) {
-                    ClientProxy.displayOutOfAir();
+                if (player.getLevel().isClientSide() && player == CreateGravity.PROXY.getLocalPlayer()) {
+                    CreateGravity.PROXY.setOverlayMessage(Component.translatable("message.action_bar.low_oxygen_alert"));
                 }
             }
         });
