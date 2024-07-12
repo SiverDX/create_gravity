@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -44,16 +45,20 @@ public class ServerConfig {
 
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> BIOME_CONFIGS_INTERNAL;
 
-    public record BiomeConfig(@Nullable Holder<Biome> biome, @Nullable TagKey<Biome> tag, int oxygenFactor, double gravityFactor) {
-        public static @Nullable BiomeConfig fromString(final @NotNull String data) {
+    public record BiomeConfig(Predicate<Holder<Biome>> predicate, int oxygenFactor, double gravityFactor) {
+        public static int BIOME = 0;
+        public static int OXYGEN_FACTOR = 1;
+        public static int GRAVITY_FACTOR = 2;
+
+        public static @Nullable BiomeConfig fromString(@NotNull final String data) {
             if (server == null) {
                 return null;
             }
 
             String[] split = data.split(";");
-            String biome = getData(split, 0);
-            String oxygenFactorRaw = getData(split, 1);
-            String gravityFactorRaw = getData(split, 2);
+            String biome = getData(split, BIOME);
+            String oxygenFactorRaw = getData(split, OXYGEN_FACTOR);
+            String gravityFactorRaw = getData(split, GRAVITY_FACTOR);
 
             BiomeConfig config = null;
 
@@ -67,14 +72,14 @@ public class ServerConfig {
 
                 if (isTag) {
                     Optional<TagKey<Biome>> optional = registry.getTagNames().filter(tag -> tag.location().equals(location)).findFirst();
-                    config = optional.map(key -> new BiomeConfig(null, key, oxygenFactor, gravityFactor)).orElse(null);
+                    config = optional.map(tag -> new BiomeConfig(toCheck -> toCheck.is(tag), oxygenFactor, gravityFactor)).orElse(null);
                 } else {
                     Optional<Holder.Reference<Biome>> optional = registry.holders().filter(holder -> {
                         Optional<ResourceKey<Biome>> key = holder.unwrapKey();
                         return key.map(biomeResourceKey -> biomeResourceKey.location().equals(location)).orElse(false);
                     }).findFirst();
 
-                    config = optional.map(biomeHolder -> new BiomeConfig(biomeHolder, null, oxygenFactor, gravityFactor)).orElse(null);
+                    config = optional.map(holder -> new BiomeConfig(toCheck -> toCheck.equals(holder), oxygenFactor, gravityFactor)).orElse(null);
                 }
             }
 
@@ -121,7 +126,7 @@ public class ServerConfig {
         List<BiomeConfig> newConfigs = new ArrayList<>();
         BIOME_CONFIGS_INTERNAL.get().forEach(data -> newConfigs.add(BiomeConfig.fromString(data)));
         BIOME_CONFIGS = newConfigs.stream().filter(Objects::nonNull).collect(Collectors.toList());
-        CreateGravity.LOG.info("Reloaded configuration: [{}]", BIOME_CONFIGS);
+        CreateGravity.LOG.info("Reloaded configuration for [{}] entries", BIOME_CONFIGS.size());
     }
 
     public static int reloadConfig(final ServerPlayer initiator) {
@@ -145,11 +150,7 @@ public class ServerConfig {
         }
 
         for (BiomeConfig config : BIOME_CONFIGS) {
-            if (config.tag() != null) {
-                if (biome.is(config.tag())) {
-                    return config;
-                }
-            } else if (config.biome() != null && biome.equals(config.biome())) {
+            if (config.predicate().test(biome)) {
                 return config;
             }
         }
@@ -165,9 +166,9 @@ public class ServerConfig {
                 return false;
             }
 
-            String biome = getData(data, 0);
-            String oxygenFactor = getData(data, 1);
-            String gravityFactor = getData(data, 2);
+            String biome = getData(data, BiomeConfig.BIOME);
+            String oxygenFactor = getData(data, BiomeConfig.OXYGEN_FACTOR);
+            String gravityFactor = getData(data, BiomeConfig.GRAVITY_FACTOR);
 
             if (biome == null) {
                 return false;
