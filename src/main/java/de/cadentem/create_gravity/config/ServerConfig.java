@@ -19,10 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ServerConfig {
@@ -51,9 +49,9 @@ public class ServerConfig {
         public static int OXYGEN_FACTOR = 1;
         public static int GRAVITY_FACTOR = 2;
 
-        public static @Nullable BiomeConfig fromString(@NotNull final String data) {
-            if (server == null) {
-                return null;
+        public static void addConfig(@NotNull final String data) {
+            if (server == null || BIOME_CONFIGS == null) {
+                return;
             }
 
             String[] split = data.split(";");
@@ -84,11 +82,11 @@ public class ServerConfig {
                 }
             }
 
-            if (config == null) {
+            if (config != null) {
+                BIOME_CONFIGS.add(config);
+            } else {
                 CreateGravity.LOG.warn("Configuration not loaded for [{}]", data);
             }
-
-            return config;
         }
     }
 
@@ -124,9 +122,8 @@ public class ServerConfig {
             return;
         }
 
-        List<BiomeConfig> newConfigs = new ArrayList<>();
-        BIOME_CONFIGS_INTERNAL.get().forEach(data -> newConfigs.add(BiomeConfig.fromString(data)));
-        BIOME_CONFIGS = newConfigs.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        BIOME_CONFIGS = new ArrayList<>();
+        BIOME_CONFIGS_INTERNAL.get().forEach(BiomeConfig::addConfig);
         CreateGravity.LOG.info("Reloaded configuration for [{}] entries", BIOME_CONFIGS.size());
     }
 
