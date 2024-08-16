@@ -35,10 +35,13 @@ import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
 
 import javax.annotation.Nullable;
 import java.text.DecimalFormat;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -142,9 +145,25 @@ public class ForgeEvents {
 
             if (tag != null && chest.is(CGItemTags.BACKTANKS)) {
                 backtankSupply = tag.getInt("Air");
+            } else if (CreateGravity.IS_CURIOS_LOADED) {
+                Optional<SlotResult> slot = CuriosApi.getCuriosHelper().findCurios(player, curio -> curio.is(CGItemTags.BACKTANKS)).stream().findFirst();
+
+                if (slot.isPresent()) {
+                    tag = slot.get().stack().getTag();
+
+                    if (tag != null) {
+                        backtankSupply = tag.getInt("Air");
+                    }
+                }
             }
 
             boolean hasDivingHelmet = player.getItemBySlot(EquipmentSlot.HEAD).is(CGItemTags.DIVING_HELMETS);
+
+            if (!hasDivingHelmet && CreateGravity.IS_CURIOS_LOADED) {
+                if (!CuriosApi.getCuriosHelper().findCurios(player, curio -> curio.is(CGItemTags.DIVING_HELMETS)).isEmpty()) {
+                    hasDivingHelmet = true;
+                }
+            }
 
             if (backtankSupply >= 1 && (!ServerConfig.FULL_SET.get() || hasDivingHelmet)) {
                 event.setCanBreathe(true);

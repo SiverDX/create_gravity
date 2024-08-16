@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -25,6 +26,7 @@ public class CreateGravity {
     public static final Logger LOG = LogUtils.getLogger();
 
     public static final Proxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
+    public static final boolean IS_CURIOS_LOADED = ModList.get().isLoaded("curios");
 
     public CreateGravity() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
