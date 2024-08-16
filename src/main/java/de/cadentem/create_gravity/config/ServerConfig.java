@@ -129,7 +129,7 @@ public class ServerConfig {
 
     public static int reloadConfig(final ServerPlayer initiator) {
         if (server == null) {
-            server = initiator.getLevel().getServer();
+            server = initiator.level().getServer();
             CreateGravity.LOG.warn("Server was not set");
         }
 
